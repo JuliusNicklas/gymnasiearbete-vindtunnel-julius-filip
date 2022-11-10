@@ -3,5 +3,5 @@
     "board": "esp32:esp32:featheresp32",
     "output": "../build",
     "port": "/dev/tty.wchusbserial54790233811",
-    "sketch": "prototype-code/fan_control_tach.ino"
+    "sketch": "prototype-code/fan_control_prototype2/fan_control_tach.ino"
 }

@@ -1,8 +1,9 @@
-
+#include "esp_attr.h"
 
 int tachInput = 0;                  //The input from the tachometer built in on the fan (RPM)
                                     //Sends >>TWO PULSES PER ROTATION<<
-                                    //Used for counting average RPM last second      
+                                    //Used for counting average RPM last second
+int tachCount = 0;             //Counts pulses since laste 1-second average calculation     
 int RPM = 0;                        //Calculated 1-sec average RPM
 int fanCtrlVoltage = 0;             //The control voltage to output to the fan control pwm input
 int fanPowerPercent = 0;
@@ -25,6 +26,9 @@ void setup(){
     delay(200);
 
     setupLedcChannel(FAN_CTRL_PIN, FAN_CTRL_CHANNEL);
+
+    attachInterrupt(tachInput, tachCounter, RISING);    //Upon detecting rising edge on tach pulse on tachInput, 
+                                                        //trigger tachCounter function
 }
 
 void loop(){
@@ -52,9 +56,24 @@ void loop(){
         Serial.print("%");
         Serial.println("\t");
     }
+
+    //Calculate 1-sec average RPM
+    if(currentMillis - previousTach >= tachInterval){
+
+        RPM = (tachCount/2)/((currentMillis - previousTach)/1000);
+
+        previousTach = currentMillis;
+        tachCount = 0;
+
+    }
 }
 
 void setupLedcChannel(uint8_t pin, uint8_t channel){
   ledcAttachPin(pin, channel);
   ledcSetup(channel, 1200, 8);
+}
+
+void IRAM_ATTR tachCounter() {
+    tachCount++;        //increments tachCount by one, for each tach pulse
+    Serial.println("count!");
 }
