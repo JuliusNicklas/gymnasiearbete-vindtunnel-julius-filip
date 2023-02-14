@@ -2,6 +2,6 @@
     "configuration": "FlashFreq=80,UploadSpeed=115200,DebugLevel=none,PartitionScheme=default",
     "board": "esp32:esp32:featheresp32",
     "output": "../build",
-    "port": "/dev/tty.wchusbserial54790233811",
-    "sketch": "prototype-code/fan_control_prototype2/fan_control_tach.ino"
+    "port": "/dev/tty.usbserial-01D17D48",
+    "sketch": "prototype-code/loadcell_code_test/loadcell_code_calibration/loadcell_code_calibration_1.0.ino"
 }
