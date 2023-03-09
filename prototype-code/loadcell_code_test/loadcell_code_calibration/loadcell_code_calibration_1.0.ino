@@ -1,50 +1,45 @@
-#include <HX711.h>
+// Calibrating the load cell
+#include "HX711.h"
 
-// Define the digital output (DOUT) and clock (SCK) pins for the first HX711
-const int DAT1 = 27;
-const int CLK1 = 12;
+// HX711 circuit wiring
+const int LOADCELL_DOUT_PIN = 15;
+const int LOADCELL_SCK_PIN = 33;
 
-// Define the digital output (DOUT) and clock (SCK) pins for the second HX711
-const int DAT2 = 15;
-const int CLK2 = 33;
-
-// Initialize the HX711 load cells
-HX711 cell1(DAT1, CLK1);
-HX711 cell2(DAT2, CLK2);
-
-// Define the known weight
-int known_weight = 1000;
+HX711 scale;
 
 void setup() {
-  // Start the serial communication
-  Serial.begin(9600);
-
-  // Set the gain for the HX711 amplifier
-  cell1.set_gain(128);
-  cell2.set_gain(128);
+  //Begins communication with serialmonitor
+  Serial.begin(115200);
+  //Starts communication with scale using LOADCELL_DOUT_PIN and LOADCELL_SCK_PIN
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
 }
 
 void loop() {
-  // Apply the known weight to cell 1 and measure the output value
-  cell1.tare();
-  int output_value_cell1 = cell1.read();
 
-  // Calculate the scale factor for cell 1
-  float scale_factor_cell1 = (float) known_weight / output_value_cell1;
+  if (scale.is_ready()) //When scale communication is ready starts the calibration process
+  {
+    //Tares scale and defines what value is zero
+    scale.set_scale();
+    Serial.println("Tare... remove any weights from the scale.");
+    delay(5000);
+    scale.tare();
+    Serial.println("Tare done...");
 
-  // Apply the known weight to cell 2 and measure the output value
-  cell2.tare();
-  int output_value_cell2 = cell2.read();
-
-  // Calculate the scale factor for cell 2
-  float scale_factor_cell2 = (float) known_weight / output_value_cell2;
-
-  // Print the scale factors for each cell
-  Serial.print("Scale factor for cell 1: ");
-  Serial.println(scale_factor_cell1);
-  Serial.print("Scale factor for cell 2: ");
-  Serial.println(scale_factor_cell2);
-
-  // Wait for a little bit before repeating
+    //Weights known item and displays raw output from 10 measurings
+    Serial.print("Place a known weight on the scale...");
+    delay(5000);
+    long reading = scale.get_units(10);
+    Serial.print("Result: ");
+    Serial.println(reading);
+  } 
+  else //If communication is not established with the scale send an error message
+  {
+    Serial.println("HX711 not found.");
+  }
+  //Delay between next reading
   delay(1000);
 }
+
+//calibration factor will be the (reading)/(known weight)
+//CAL1: 3005
+//CAL2: 3174

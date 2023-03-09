@@ -3,5 +3,5 @@
     "board": "esp32:esp32:featheresp32",
     "output": "../build",
     "port": "/dev/tty.usbserial-01D17D48",
-    "sketch": "prototype-code/loadcell_code_test/loadcell_code_calibration/loadcell_code_calibration_1.0.ino"
+    "sketch": "prototype-code/Code_Combinations/TFT_Loadcell.ino"
 }
