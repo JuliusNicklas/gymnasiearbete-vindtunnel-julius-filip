@@ -1,7 +1,7 @@
 {
-    "configuration": "FlashFreq=80,UploadSpeed=115200,DebugLevel=none,PartitionScheme=default",
+    "configuration": "FlashFreq=80,UploadSpeed=921600,DebugLevel=none,PartitionScheme=default",
     "board": "esp32:esp32:featheresp32",
     "output": "../build",
-    "port": "/dev/tty.usbserial-01D17D48",
-    "sketch": "prototype-code/Code_Combinations/TFT_Loadcell.ino"
+    "port": "/dev/tty.wchusbserial54790233811",
+    "sketch": "prototype-code/fan_control_prototype2/fan_control_tach.ino"
 }

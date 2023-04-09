@@ -1,36 +1,44 @@
 #include "esp_attr.h"
 
-int tachInput = 0;                  //The input from the tachometer built in on the fan
-                                    //Sends >>TWO PULSES PER ROTATION<<
-                                    //Used for counting average RPM last second
-int tachCount = 0;                  //Counts pulses since laste 1-second average calculation     
+unsigned long volatile tachTS1;     //time stamp of second to last tach pulse reading
+unsigned long volatile tachTS2;     //time stamp of last tach pulse reading
+const int debounceTime = 5;         //debounce time in milliseconds 
+const int fanStoppedThreshold = 500;  //threshold in time since last tach pulse where the fan is considered stopped
 int RPM = 0;                        //Calculated 1-sec average RPM
 int fanCtrlVoltage = 0;             //The control voltage to output to the fan control pwm input
 int fanPowerPercent = 0;
 int potentiometerInput = 0;         //The Voltage recorded from the potentiometer
-int potentiometerSamples = 500;     //Samples from potentiometer to get average value
+const int potentiometerSamples = 500;     //Samples from potentiometer to get average value
 unsigned long currentMillis = 0;
 unsigned long previousTach = 0;
-unsigned long tachInterval = 1000; //The interval between measurments of RPM. >>MUST BE 1000<<
-                                    //Useäd for calculating average RPM last second
-unsigned long previousUpdate = 0;
-unsigned long updateInterval = 10; //The delay between general updates (ticks)
-
+const unsigned long tachInterval = 1000;  //The interval between measurments of RPM. >>MUST BE 1000<<
+                                    //Used for calculating average RPM last second
+unsigned long previousUpdate = 0;   
+unsigned long updateInterval = 100;  //The delay between general updates (ticks)
 
 #define FAN_CTRL_PIN 25
 #define FAN_CTRL_CHANNEL 2
 #define POTENTIOMETER_PIN 34
-#define TACH_PIN 36
+#define TACH_PIN 39
 
-void setupLedcChannel(uint8_t pin, uint8_t channel){  // Creates a channel and attaches a pin
-  ledcAttachPin(pin, channel);  // Attaches pin to channel
-  ledcSetup(channel, 20000, 8); // Sets up channel (channel number, frequency, resolution)
+void setupLedcChannel(uint8_t pin, uint8_t channel){
+  ledcAttachPin(pin, channel);
+  ledcSetup(channel, 1200, 8);
 }
 
 void tachCounter() {
-    //tachInput = analogRead(TACH_PIN);
-    tachCount++;        //increments tachCount by one, for each tach pulse
-  //  Serial.println("count!");
+  unsigned long m=millis();
+  if(m-tachTS2>debounceTime){
+    tachTS1 = tachTS2;
+    tachTS2 = m;
+  }
+}
+
+unsigned long calcRPM() {
+  if(millis()-tachTS2 < fanStoppedThreshold && tachTS2!=0){
+        return (60000/(tachTS2-tachTS1))/2;
+  }
+  else return 0;
 }
 
 void setup(){
@@ -44,7 +52,7 @@ void setup(){
     pinMode(POTENTIOMETER_PIN, INPUT);
     
 
-    attachInterrupt(TACH_PIN, tachCounter, FALLING);    //Upon detecting rising edge on tach pulse on tach pin, 
+    attachInterrupt(TACH_PIN, tachCounter, RISING);    //Upon detecting rising edge on tach pulse on tachInput, 
                                                         //trigger tachCounter function
 }
 
@@ -64,12 +72,12 @@ void loop(){
         fanCtrlVoltage = map(potentiometerInput, 0, 4095, 0, 255);
         fanCtrlVoltage = constrain(fanCtrlVoltage, 0, 255);
         ledcWrite(FAN_CTRL_CHANNEL, fanCtrlVoltage);
-        //ledcWrite(FAN_CTRL_CHANNEL, 0);
         fanPowerPercent = map(fanCtrlVoltage, 0, 255, 0, 100);
 
         //Serial.print("Speed: ");
         Serial.print(RPM);
-        Serial.print(" RPM\t");
+        //Serial.print(" RPM");
+        Serial.print("\t");
 
         Serial.print(potentiometerInput);
         Serial.print("\t");
@@ -82,12 +90,6 @@ void loop(){
 
     //Calculate 1-sec average RPM
     if(currentMillis - previousTach >= tachInterval){
-
-        //RPM = ((tachCount/2)/((currentMillis - previousTach)/1000))*60;
-        RPM = (tachCount/2)*60;
-        tachCount = 0;
-        previousTach = currentMillis;
-        
+      RPM = calcRPM();
     }
 }
-
