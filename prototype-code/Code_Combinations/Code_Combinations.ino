@@ -8,8 +8,8 @@
 
 //Pins:
     //Loadcell1
-    const int DAT1 = 26;
-    const int CLK1 = 25;
+    const int DAT1 = 26;    // The data pin for the first load cell.  / Used for initiating loadcell through hx711 library so that it can be read with hx711.
+    const int CLK1 = 25;    // The clock pin for the first load cell. / Used together with DAT1 for initialising load cell communication.
     //Loadcell2
     const int DAT2 = 14;
     const int CLK2 = 32;
@@ -17,15 +17,18 @@
     const int DAT3 = 27;//26
     const int CLK3 = 12;//25
     //TFT
-    #define TFT_CS   15
-    #define TFT_DC   33
+    #define TFT_CS   15     // Pin for communication with TFT-display. / Used by TFT libraries for doing things with the TFT display.
+    #define TFT_DC   33     // Pin for communication with TFT-display.
 
     //Output pin to fan
-    #define FAN_CTRL_PIN 4
-    #define FAN_CTRL_CHANNEL 2
+    #define FAN_CTRL_PIN 4          // The pin the fan control voltage is output through. / Used with ledcAttachPin to attach to a channel.
+    #define FAN_CTRL_CHANNEL 2      // The pwm channel the 
 
     //Potentiometer pin
     #define POTENTIOMETER_PIN 34
+
+    //Tarebutton pin
+    #define tarebuttonPin 21
 
 //Variables:
     //Load cells
@@ -39,6 +42,8 @@
     float windSpeed = 0.0;
     //Potentiometer
     int potentiometerInput = 0;         //The Voltage recorded from the potentiometer
+    //TareButton
+    int TareButtonState = 0; //State of button connected to tare
 
 //Initiaizes
     //Declares what component to use for loadcells
@@ -92,6 +97,8 @@ void setup() {
     setupLedcChannel(FAN_CTRL_PIN, FAN_CTRL_CHANNEL);
     pinMode(POTENTIOMETER_PIN, INPUT);
 
+//Tare button
+    pinMode(tarebuttonPin, INPUT_PULLUP);
 }
 
 void loop() {
@@ -127,12 +134,10 @@ void loop() {
     //Clearing method
     tft.setCursor(0,0); //Moves cursor to top
     tft.fillScreen(ILI9341_BLACK); //Clears screen
-    //tft.print("Fan speed: "); tft.println(fan_speed);
     tft.print("Downforce Front: "); tft.println(weight1+String("g"));
     tft.print("Downforce Rear:  "); tft.println(weight2+String("g"));
     tft.print("Drag:            "); tft.println(weight3+String("g"));
     tft.print("Downforce koefficient:"); tft.println(downforceKoefficient);
-    //tft.print("Downforce general: "); tft.println((weight1+weight2)/2+String("g"));
     tft.print("Fan power: "); tft.println(fanCtrlVoltage); //tft.println("%");
     if(fanCtrlVoltage < 25) {
         tft.print("Wind speed: "); tft.println("0.0 m/s");
@@ -141,6 +146,25 @@ void loop() {
         tft.print("Wind speed: "); tft.print(windSpeed); tft.println(" m/s");
     }
 
+//TareFunction
+    TareButtonState = digitalRead(tarebuttonPin);
+    if (TareButtonState == 0) 
+    {
+        //Clears TFT Screen
+        tft.setCursor(0,0);
+        tft.fillScreen(ILI9341_BLACK);
+        //Starts taring process
+        tft.print("Commencing tare on loadcells, please wait...");
+        delay(2500);
+        loadCell1.tare();
+        loadCell2.tare();
+        loadCell3.tare();
+        //Tare done
+        tft.fillScreen(ILI9341_BLACK);
+        tft.setCursor(0,0);
+        tft.print("Tare done!");
+        delay(1000);
+    }
 //Delay between readings
 //delay(200);
 }
