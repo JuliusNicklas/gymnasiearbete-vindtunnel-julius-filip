@@ -17,7 +17,7 @@
     const int DAT3 = 27;//26
     const int CLK3 = 12;//25
     //TFT
-    #define TFT_CS   15     // Pin for communication with TFT-display. / Used by TFT libraries for doing things with the TFT display.
+    #define TFT_CS   15     // Pin for communication with TFT-dxisplay. / Used by TFT libraries for doing things with the TFT display.
     #define TFT_DC   33     // Pin for communication with TFT-display.
 
     //Output pin to fan
@@ -86,7 +86,7 @@ void setup() {
     loadCell3.set_scale(12181.f);  // Set the scale factor for the second load cell  -----
     loadCell3.tare();  // Tare the second scale ----
 
-    Serial.println("done");
+    Serial.println("Loadcell start done");
 
 //TFT
     tft.begin();    //Starts TFT
@@ -94,8 +94,8 @@ void setup() {
     tft.setTextSize(2); //Tells TFT what size of text to use
 
 //Fan
-    setupLedcChannel(FAN_CTRL_PIN, FAN_CTRL_CHANNEL);
-    pinMode(POTENTIOMETER_PIN, INPUT);
+    setupLedcChannel(FAN_CTRL_PIN, FAN_CTRL_CHANNEL);   // Sets up ledc channel for generating PWM
+    pinMode(POTENTIOMETER_PIN, INPUT); 
 
 //Tare button
     pinMode(tarebuttonPin, INPUT_PULLUP);
@@ -103,35 +103,30 @@ void setup() {
 
 void loop() {
 //Fan:
-    potentiometerInput = analogRead(POTENTIOMETER_PIN);
+    potentiometerInput = analogRead(POTENTIOMETER_PIN);     // Reads the value from the potentiometer pin.
     
-    fanCtrlVoltage = map(potentiometerInput, 0, 4095, 0, 255);
+    fanCtrlVoltage = map(potentiometerInput, 0, 4095, 0, 255);  // Sets fanCtrlVoltage depending on potentiometer read
     fanCtrlVoltage = constrain(fanCtrlVoltage, 0, 255);
-    //fanCtrlVoltage = 35;
-    ledcWrite(FAN_CTRL_CHANNEL, fanCtrlVoltage);
+    fanCtrlVoltage = 255;
+    ledcWrite(FAN_CTRL_CHANNEL, fanCtrlVoltage);    // Outputs fanCtrlVoltage to fan as PWM through ledc
 
-    fanPowerPercent = map(fanCtrlVoltage, 0, 255, 0, 100);
-
-    windSpeed = 0.136 + 0.0245*fanCtrlVoltage + 0.0000148*fanCtrlVoltage*fanCtrlVoltage;
-
-//Loadcells:
+    //fanPowerPercent = map(fanCtrlVoltage, 0, 255, 0, 100);  // Calculates percentage of max power of fan for display purposes (not in use)
+    
+    windSpeed = 0.136 + 0.0245*fanCtrlVoltage + 0.0000148*fanCtrlVoltage*fanCtrlVoltage;    // Calculates approximate wind speed based on previous recression analysis
     // Read the weight of the first load cell
     weight1 = loadCell1.get_units(10); 
-    //float weight1 = fanCtrlVoltage*fanCtrlVoltage*0.02+2*fanCtrlVoltage;
 
     // Read the weight of the second load cell
     weight2 = loadCell2.get_units(10); 
-    //weight2 = fanCtrlVoltage*fanCtrlVoltage*0.015+3*fanCtrlVoltage;
 
     // Read the weight of the  third load cell
     weight3 = loadCell3.get_units(10);
-    //weight3 = fanCtrlVoltage*fanCtrlVoltage*0.01;
 
     //Calculate downforce/drag ratio
     downforceKoefficient = (weight1+weight2)/weight3;
 
 //TFT:
-    //Clearing method
+    // Displays text and values on screen:
     tft.setCursor(0,0); //Moves cursor to top
     tft.fillScreen(ILI9341_BLACK); //Clears screen
     tft.print("Downforce Front: "); tft.println(weight1+String("g"));
@@ -139,7 +134,7 @@ void loop() {
     tft.print("Drag:            "); tft.println(weight3+String("g"));
     tft.print("Downforce koefficient:"); tft.println(downforceKoefficient);
     tft.print("Fan power: "); tft.println(fanCtrlVoltage); //tft.println("%");
-    if(fanCtrlVoltage < 25) {
+    if(fanCtrlVoltage < 25) {   // The calculation for wind speed is wildly innacurate at values of fanCtrlVoltage below 25. In reality the fan doesn't spin.
         tft.print("Wind speed: "); tft.println("0.0 m/s");
     }
     else {
@@ -147,7 +142,7 @@ void loop() {
     }
 
 //TareFunction
-    TareButtonState = digitalRead(tarebuttonPin);
+    TareButtonState = digitalRead(tarebuttonPin);   // Reads if button is pressed
     if (TareButtonState == 0) 
     {
         //Clears TFT Screen

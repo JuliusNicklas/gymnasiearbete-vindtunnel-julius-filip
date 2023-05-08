@@ -44,7 +44,7 @@ void setup(){
     pinMode(POTENTIOMETER_PIN, INPUT);
     
 
-    attachInterrupt(TACH_PIN, tachCounter, FALLING);    //Upon detecting rising edge on tach pulse on tach pin, 
+    attachInterrupt(TACH_PIN, tachCounter, FALLING);    //Upon detecting falling edge on tach pulse on tach pin, 
                                                         //trigger tachCounter function
 }
 
